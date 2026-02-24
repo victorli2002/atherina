@@ -1,0 +1,51 @@
+import atheris
+from typing import get_origin, get_args, Union
+
+class UnsupportedTypeError(Exception):
+    pass
+
+def typed_data(fdp, typ):
+    origin = get_origin(typ)
+    args = get_args(typ)
+
+    if typ is int:
+        return fdp.ConsumeInt(32)
+
+    if typ is bool:
+        return fdp.ConsumeBool()
+
+    if typ is float:
+        return fdp.ConsumeFloat()
+
+    if typ is str:
+        return fdp.ConsumeUnicodeNoSurrogates(32)
+
+    if origin is list:
+        list_typ = args[0]
+        n = fdp.ConsumeIntInRange(0, 100) # limit the length
+        return [typed_data(fdp, list_typ) for _ in range(n)]
+
+    if origin is Union:
+        idx = fdp.ConsumeIntInRange(0, len(args)-1)
+        return typed_data(fdp, args[idx])
+
+    raise UnsupportedTypeError(f"Unsupported type: {typ}")
+
+def generateInput(input_bytes, arg_types):
+    fdp = atheris.FuzzedDataProvider(input_bytes)
+    kwargs = {k: typed_data(fdp, t) for k, t in arg_types.items()}
+    return kwargs
+
+def run_function(fn, kwargs):
+    try:
+        fn(**kwargs)
+#     except UnsupportedTypeError:
+#         return
+    except AssertionError:
+        return
+    except Exception:
+        print("-"*50)
+        print("crash detected")
+        print(f"function: {fn.__name__}")
+        print(f"args: {kwargs}")
+        raise
