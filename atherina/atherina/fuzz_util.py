@@ -1,5 +1,6 @@
 import atheris
 import dataclasses
+import inspect
 import types
 import typing
 from typing import get_origin, get_args, Union
@@ -56,6 +57,25 @@ def typed_data(fdp, typ):
         kwargs = {name: typed_data(fdp, field_typ) for name, field_typ in hints.items()}
         return typ(**kwargs)
 
+    if isinstance(typ, type):
+        class_hints = typing.get_type_hints(typ)
+        init_hints = typing.get_type_hints(typ.__init__)
+        hints = {**class_hints, **init_hints}
+        sig = inspect.signature(typ.__init__)
+        params = [name for name in sig.parameters if name != 'self']
+        if params and typ.__init__ is not object.__init__:
+            kwargs = {}
+            for name in params:
+                if name not in hints:
+                    raise UnsupportedTypeError(f"Parameter {name} of {typ.__name__} has no type annotation")
+                kwargs[name] = typed_data(fdp, hints[name])
+            return typ(**kwargs)
+        else:
+            obj = typ()
+            for name, field_typ in class_hints.items():
+                setattr(obj, name, typed_data(fdp, field_typ))
+            return obj
+
     raise UnsupportedTypeError(f"Unsupported type: {typ}")
 
 def generateInput(input_bytes, arg_types):
@@ -74,5 +94,6 @@ def run_function(fn, kwargs):
         print("-"*50)
         print("crash detected")
         print(f"function: {fn.__name__}")
-        print(f"args: {kwargs}")
+        args = {k: vars(v) if hasattr(v, '__dict__') else v for k, v in kwargs.items()}
+        print(f"args: {args}")
         raise
