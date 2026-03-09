@@ -29,6 +29,22 @@ def typed_data(fdp, typ):
         idx = fdp.ConsumeIntInRange(0, len(args)-1)
         return typed_data(fdp, args[idx])
 
+    if typ is complex:
+        return complex(fdp.ConsumeFloat(), fdp.ConsumeFloat())
+
+    if origin is tuple:
+        return tuple(typed_data(fdp, a) for a in args)
+
+    if origin is set:
+        elem_typ = args[0]
+        n = fdp.ConsumeIntInRange(0, 100)
+        return {typed_data(fdp, elem_typ) for _ in range(n)}
+
+    if origin is dict:
+        key_typ, val_typ = args
+        n = fdp.ConsumeIntInRange(0, 100)
+        return {typed_data(fdp, key_typ): typed_data(fdp, val_typ) for _ in range(n)}
+
     raise UnsupportedTypeError(f"Unsupported type: {typ}")
 
 def generateInput(input_bytes, arg_types):

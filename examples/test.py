@@ -1,5 +1,5 @@
 from type_fuzzer import fuzz, fuzz_all
-from typing import List
+from typing import List, Dict, Set, Tuple
 
 @fuzz
 def foo(x: int, y: str) -> bool:
@@ -11,7 +11,7 @@ def bar(a: int, b: float):
         return a / 0
     return a + b
 
-@fuzz
+#@fuzz
 def bazz(a: List[int] | str):
     if isinstance(a, str):
         assert len(a) > 5
@@ -25,6 +25,17 @@ def bazz(a: List[int] | str):
         return
     
     raise Exception("not supposed to get triggered")
+
+@fuzz
+def qux(a: Dict[int, complex], b: Set[int], c: Tuple[int, float, complex]):
+    assert len(a) > 3
+    assert len(b) > 3
+    if any(v.imag > 1000 for v in a.values()):
+        raise Exception
+    if any(x < 0 for x in b) and sum(b) > 100:
+        raise Exception
+    if c[1] > 50 and abs(c[2]) < 1:
+        raise Exception
 
 if __name__ == "__main__":
     fuzz_all()
