@@ -1,9 +1,9 @@
 import atheris
 import sys
-from type_fuzzer.decorator import FUZZ_TARGETS
+from atherina.decorator import FUZZ_TARGETS
 
 with atheris.instrument_imports():
-    import type_fuzzer.fuzz_util as fuzz_util
+    import atherina.fuzz_util as fuzz_util
     
 def TestOneInput(data):
     for func in FUZZ_TARGETS:

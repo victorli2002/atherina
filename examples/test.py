@@ -1,4 +1,4 @@
-from type_fuzzer import fuzz, fuzz_all
+from atherina import fuzz, fuzz_all
 from typing import List, Dict, Set, Tuple
 from dataclasses import dataclass
 
