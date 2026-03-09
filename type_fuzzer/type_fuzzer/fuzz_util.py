@@ -1,4 +1,7 @@
 import atheris
+import dataclasses
+import types
+import typing
 from typing import get_origin, get_args, Union
 
 class UnsupportedTypeError(Exception):
@@ -7,6 +10,9 @@ class UnsupportedTypeError(Exception):
 def typed_data(fdp, typ):
     origin = get_origin(typ)
     args = get_args(typ)
+
+    if typ is type(None):
+        return None
 
     if typ is int:
         return fdp.ConsumeInt(32)
@@ -25,7 +31,7 @@ def typed_data(fdp, typ):
         n = fdp.ConsumeIntInRange(0, 100) # limit the length
         return [typed_data(fdp, list_typ) for _ in range(n)]
 
-    if origin is Union:
+    if origin is Union or isinstance(typ, types.UnionType):
         idx = fdp.ConsumeIntInRange(0, len(args)-1)
         return typed_data(fdp, args[idx])
 
@@ -44,6 +50,11 @@ def typed_data(fdp, typ):
         key_typ, val_typ = args
         n = fdp.ConsumeIntInRange(0, 100)
         return {typed_data(fdp, key_typ): typed_data(fdp, val_typ) for _ in range(n)}
+
+    if dataclasses.is_dataclass(typ) and isinstance(typ, type):
+        hints = typing.get_type_hints(typ)
+        kwargs = {name: typed_data(fdp, field_typ) for name, field_typ in hints.items()}
+        return typ(**kwargs)
 
     raise UnsupportedTypeError(f"Unsupported type: {typ}")
 
