@@ -5,7 +5,7 @@ Requires Linux (atheris does not support macOS/Windows natively).
 ## Installation
 
 ```bash
-python -m pip install -e type_fuzzer/
+python -m pip install atherina/
 ```
 
 ## Usage

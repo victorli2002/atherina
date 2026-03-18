@@ -12,7 +12,7 @@ def TestOneInput(data):
         
         kwargs = fuzz_util.generateInput(data, arg_types)
         #sys.stderr.write(f"Debug: fn={fn} kwargs={kwargs}\n")
-        fuzz_util.run_function(fn, kwargs)
+        fuzz_util.run_function(fn, kwargs, func['ignore'])
     #sys.stderr.flush()
 
 def fuzz_all():

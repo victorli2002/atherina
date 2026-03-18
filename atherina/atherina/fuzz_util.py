@@ -57,7 +57,7 @@ def typed_data(fdp, typ):
         kwargs = {name: typed_data(fdp, field_typ) for name, field_typ in hints.items()}
         return typ(**kwargs)
 
-    if isinstance(typ, type):
+    if isinstance(typ, type): # for classes
         class_hints = typing.get_type_hints(typ)
         init_hints = typing.get_type_hints(typ.__init__)
         hints = {**class_hints, **init_hints}
@@ -67,7 +67,7 @@ def typed_data(fdp, typ):
             kwargs = {}
             for name in params:
                 if name not in hints:
-                    raise UnsupportedTypeError(f"Parameter {name} of {typ.__name__} has no type annotation")
+                    raise UnsupportedTypeError(f"Parameter {name} of {typ.__name__} has no type annotations :(")
                 kwargs[name] = typed_data(fdp, hints[name])
             return typ(**kwargs)
         else:
@@ -83,14 +83,16 @@ def generateInput(input_bytes, arg_types):
     kwargs = {k: typed_data(fdp, t) for k, t in arg_types.items()}
     return kwargs
 
-def run_function(fn, kwargs):
+def run_function(fn, kwargs, ignore=()):
     try:
         fn(**kwargs)
 #     except UnsupportedTypeError:
 #         return
     except AssertionError:
         return
-    except Exception:
+    except Exception as e:
+        if isinstance(e, ignore):
+            return
         print("-"*50)
         print("crash detected")
         print(f"function: {fn.__name__}")
