@@ -5,7 +5,7 @@ Requires Linux (atheris does not support macOS/Windows natively).
 ## Installation
 
 ```bash
-python -m pip install atherina/
+python -m pip install -e atherina/
 ```
 
 ## Usage
@@ -13,10 +13,10 @@ python -m pip install atherina/
 Decorate functions with `@fuzz`, then call `fuzz_all()` to run the fuzzer against all decorated functions.
 
 ```python
-from type_fuzzer import fuzz, fuzz_all
+from atherina import fuzz, fuzz_all
 from typing import List
 
-@fuzz
+@fuzz(ignore=[ZeroDivisionError])
 def my_func(x: int, y: str) -> bool:
     ...
 

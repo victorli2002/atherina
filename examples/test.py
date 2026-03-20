@@ -80,5 +80,69 @@ def uses_no_init(obj: NoInit):
     if obj.x > 500 and len(obj.y) > 2:
         raise Exception
 
+#Stress test
+#Easy bug: ZeroDivisionError when adjustment != None and adjustment.imag == 0.0
+#Medium bug: ZeroDivisionError when a sector_weight val[0] == 0.0 and the order is active
+#Hard bug: Exception when strict=True, min_qty > 0, and at least one order has qty == 0
+@dataclass
+class Order:
+    qty: int
+    price: float
+    tag: Tuple[str, str | None]
+    active: bool
+
+#easy one found first - instant
+
+#medium one found in less than 5 min
+#30335  REDUCE cov: 28 ft: 149 corp: 31/989b lim: 226 exec/s: 1596 rss: 40Mb L: 213/213 MS: 4 ChangeByte-InsertRepeatedBytes-CrossOver-InsertRepeatedBytes-
+
+#hard one also found in less than 5 min
+#@fuzz(ignore=[ZeroDivisionError])
+#20987  REDUCE cov: 31 ft: 150 corp: 25/588b lim: 163 exec/s: 1499 rss: 40Mb L: 131/154 MS: 1 EraseBytes-
+def process_orders(
+    orders: List[Order],
+    sector_weights: Dict[str, Tuple[float, int]],   #sector -> (weight, cap)
+    risk_bounds: Tuple[int, float, bool],   #(min_qty, max_exposure, strict)
+    priority_set: Set[int],
+    adjustment: complex | None,
+) -> float:
+    gross = 0.0
+    for order in orders:
+        if order.active and order.qty > 0:
+            gross += order.qty * order.price
+
+    #Medium Bug
+    weighted = 0.0
+    for order in orders:
+        sector = order.tag[0]
+        if sector in sector_weights:
+            w, cap = sector_weights[sector]
+            if order.active and order.qty <= cap:
+                weighted += (order.qty * order.price) / w
+
+    #Hard Bug
+    min_qty, max_exposure, strict = risk_bounds
+    if strict and gross > max_exposure:
+        for order in orders:
+            if order.qty < min_qty:
+                raise Exception(
+                    f"order qty {order.qty} violates minimum {min_qty}"
+                )
+
+    #Easy Bug
+    if adjustment is not None:
+        #phase = adjustment.real / adjustment.imag
+        assert True
+        
+    score = sum(p * p for p in priority_set if p > 0)
+    sub_totals: Dict[str, float] = {}
+    for order in orders:
+        sub = order.tag[1]
+        if sub is not None:
+            sub_totals[sub] = sub_totals.get(sub, 0.0) + order.qty * order.price
+
+    return weighted + score
+
+
 if __name__ == "__main__":
     fuzz_all()
