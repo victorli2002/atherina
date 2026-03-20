@@ -2,7 +2,7 @@ from atherina import fuzz, fuzz_all
 from typing import List, Dict, Set, Tuple
 from dataclasses import dataclass
 
-@fuzz
+#@fuzz
 def foo(x: int, y: str) -> bool:
     return True
 
@@ -44,7 +44,7 @@ class DC:
     y: float
     z: Tuple[str, str | None]
 
-@fuzz
+#@fuzz
 def uses_dataclass(p: DC):
     if p.x > 1000 and p.y < -1000 and len(p.z[0]) > 1 and p.z[1] is None:
         raise Exception
@@ -60,7 +60,7 @@ def uses_fully_annotated(obj: FullyAnnotated):
     if obj.x > 500 and obj.y < -500:
         raise Exception
 
-# regular class with unannotated param — should raise UnsupportedTypeError
+# regular class with unannotated param should raise UnsupportedTypeError
 class PartiallyAnnotated:
     def __init__(self, x: int, y):  # y has no annotation
         self.x = x
@@ -70,7 +70,7 @@ class PartiallyAnnotated:
 def uses_partially_annotated(obj: PartiallyAnnotated):
     pass
 
-# class with no __init__, only class-level annotations — uses setattr path
+# class with no __init__
 class NoInit:
     x: int
     y: str

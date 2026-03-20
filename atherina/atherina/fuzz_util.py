@@ -67,7 +67,7 @@ def typed_data(fdp, typ):
             kwargs = {}
             for name in params:
                 if name not in hints:
-                    raise UnsupportedTypeError(f"Parameter {name} of {typ.__name__} has no type annotations :(")
+                    raise UnsupportedTypeError(f"Class {name} of {typ.__name__} has no type annotations :(")
                 kwargs[name] = typed_data(fdp, hints[name])
             return typ(**kwargs)
         else:
